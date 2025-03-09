@@ -1,0 +1,1 @@
+from .model import load_pretrained_vit
