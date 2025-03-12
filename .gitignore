@@ -1,3 +1,9 @@
 # .gitignore
-# Ignore large datasets
-data
+# Ignore all files in the data directory
+data/*
+
+# But do not ignore the data directory itself
+!data/
+
+# Ensure the .gitkeep file is not ignored
+!data/.gitkeep
