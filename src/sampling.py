@@ -3,9 +3,9 @@
 from abc import ABC, abstractmethod
 
 class Sampling(ABC):  # parent class
-    def __init__(self, video, num_frames):
+    def __init__(self, video, clip_length):
         self.video = video
-        self.num_frames = num_frames
+        self.clip_length = clip_length
 
     @abstractmethod
     def sample(self):
