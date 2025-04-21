@@ -20,8 +20,10 @@ class EquidistantSampling(Sampling):
 
         offset = 5  # number of frames to skip at the start, hard-coded for now, can change it to variable later
         step = (total_frames - offset) / self.clip_length # (total_frames - offset) is the actual number of frames to sample from
-        indices = [int(offset + i * step) for i in range(self.clip_length)]
-
+        indices = [int(offset + i * step) for i in range(self.clip_length)] #indices is a list of sampled frame indices
+        sampled_frames = [self.video[i]for i in indices] #sampled_frames is a list of sampled frames
+        return sampled_frames 
+        #return indices #for checking the frames sampled only
 class InterpolationSampling(Sampling):
     def __init__(self, video, clip_length):
         super().__init__(video, clip_length)
@@ -47,3 +49,4 @@ class Others(Sampling):
     def sample(self):
         # placeholder for other sampling methods
         pass
+
