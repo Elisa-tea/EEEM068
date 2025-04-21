@@ -1,6 +1,5 @@
-# args.py
-
-import argparse
+# args.py  ##placeholder and template for now, will modify the actual code for based on our case
+import argparse  
 
 def get_args():
     parser = argparse.ArgumentParser(description="Training setup for ViT project")
