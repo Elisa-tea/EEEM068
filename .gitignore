@@ -172,3 +172,8 @@ cython_debug/
 
 #DS_Store
 .DS_Store
+
+#large data
+data/*
+#keep .gitkeep files so folder structure is preserved
+!data/**/.gitkeep
