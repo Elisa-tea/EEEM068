@@ -18,4 +18,4 @@ def create_sampler(strategy, **kwargs):
     elif strategy == "augmented":
         return SamplingWithAug(**kwargs)
     else:
-        raise ValueError(f"Unknown sampling strategy: {strategy}")
+        raise ValueError(f"Unknown sampling strategy: {strategy}")  #use registry method or mapping table instead of if-else if the list grows
