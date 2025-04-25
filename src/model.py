@@ -2,7 +2,7 @@ import torch
 from transformers import AutoFeatureExtractor, AutoModelForVideoClassification
 import evaluate
 import torchmetrics
-from data import CATEGORY_INDEX
+from .data import CATEGORY_INDEX
 
 def load_pretrained_vit():
     """

@@ -3,9 +3,8 @@ import os
 
 
 class Sampler(ABC):
-    @staticmethod
     @abstractmethod
-    def sample(frame_dir=None, *args, **kwargs):
+    def sample(self, frame_dir=None, *args, **kwargs):
         pass
 
     @staticmethod
@@ -18,39 +17,53 @@ class Sampler(ABC):
 
 
 class FixedStepSampler(Sampler):
-    @staticmethod
-    def sample(frame_dir, frame_rate=8):
+    def __init__(self, step=8):
+        self.step = step
+        
+    def sample(self, frame_dir):
         """
-        Load every [frame_rate]-th frame from a directory and apply transformations.
+        Load every [step]-th frame from a directory.
         """
-        frame_files = Sampler.list_frames(frame_dir)
-        return frame_files[::frame_rate]
+        frame_files = self.list_frames(frame_dir)
+        return frame_files[::self.step]
 
 
 class EquidistantSampler(Sampler):
-    @staticmethod
-    def sample(frame_dir, initial_offset=5, min_frames=8):
-        frame_files = Sampler.list_frames(frame_dir)
+    def __init__(self, initial_offset=5, min_frames=8):
+        self.initial_offset = initial_offset
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
+        frame_files = self.list_frames(frame_dir)
         total_frames = len(frame_files)
+        
+        if total_frames <= self.initial_offset:
+            return frame_files  # Not enough frames, return all
 
-        step = (total_frames - initial_offset) / min_frames
-
-        return frame_files[initial_offset::step]
+        step = max(1, int((total_frames - self.initial_offset) / self.min_frames))
+        
+        return frame_files[self.initial_offset::step]
 
 class InterpolationSampler(Sampler):
     """
     Sample frames from a video by interpolating between key frames.
     """
-    @staticmethod
-    def sample(frame_dir, min_frames=8):
+    def __init__(self, min_frames=8):
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
         # TODO
-        pass
+        frame_files = self.list_frames(frame_dir)
+        return frame_files  # Placeholder implementation
         
 class AugmentationSampler(Sampler):
     """
     Sample frames from a video by adding new augmented frames.
     """
-    @staticmethod
-    def sample(frame_dir, min_frames=8):
+    def __init__(self, min_frames=8):
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
         # TODO: Elisa-tea
-        pass
+        frame_files = self.list_frames(frame_dir)
+        return frame_files  # Placeholder implementation

@@ -6,8 +6,8 @@ from torch.utils.data import Dataset
 import torch
 from tqdm import tqdm
 import random
-from sampling import Sampler, FixedStepSampler
-from augmentations import default_transforms, train_augmentations
+from .sampling import Sampler, FixedStepSampler
+from .augmentations import default_transforms, train_augmentations
 
 CATEGORY_INDEX = {
     "brush_hair": 0,
@@ -81,13 +81,14 @@ def split_sources(dataset_path, train_ratio=0.8):
 def create_clips(frames, clip_size=8):
     """
     Given a list of sampled frames, create multiple [clip_size]-frame clips.
+    Each clip is returned as a tensor.
     """
     clips = []
-
+    
     for i in range(0, len(frames) - clip_size + 1, clip_size):
         clip = frames[i : i + clip_size]
         if len(clip) == clip_size:
-            clips.append(clip)
+            clips.append(torch.stack(clip))  # Convert the clip to a tensor
     return clips
 
 
@@ -95,13 +96,13 @@ def process_dataset(
     dataset_path,
     sources_dict,
     augmentation_transform=None,
-    sampler: Sampler = FixedStepSampler,
+    sampler: Sampler = FixedStepSampler(),
 ):
     """
     Processes dataset based on a predefined list of sources.
     """
     if augmentation_transform is None:
-        augmentation_transform = lambda x: {"image": x}
+        augmentation_transform = lambda image: {"image": image}
 
     dataset = []
 
