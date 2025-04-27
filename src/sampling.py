@@ -1,52 +1,69 @@
 from abc import ABC, abstractmethod
+import os
 
-class Sampling(ABC):  # parent class
-    def __init__(self, video, clip_length):
-        self.video = video
-        self.clip_length = clip_length
 
+class Sampler(ABC):
     @abstractmethod
-    def sample(self):
+    def sample(self, frame_dir=None, *args, **kwargs):
         pass
 
-class EquidistantSampling(Sampling):
-    def __init__(self, video, clip_length):
-        super().__init__(video, clip_length)
+    @staticmethod
+    def list_frames(frame_dir):
+        return [
+            os.path.join(frame_dir, file)
+            for file in sorted(os.listdir(frame_dir))
+            if file.endswith((".jpg", ".png", ".jpeg"))
+        ]
 
-    def sample(self):
-        total_frames = len(self.video)
-        if self.clip_length >= total_frames or total_frames == 0:
-            raise ValueError('clip_length longer than some videos!reduce it!')   # raise error for now, can modify later
 
-        offset = 5  # number of frames to skip at the start, hard-coded for now, can change it to variable later
-        step = (total_frames - offset) / self.clip_length # (total_frames - offset) is the actual number of frames to sample from
-        indices = [int(offset + i * step) for i in range(self.clip_length)] #indices is a list of sampled frame indices
-        sampled_frames = [self.video[i]for i in indices] #sampled_frames is a list of sampled frames
-        return sampled_frames 
-        #return indices #for checking the frames sampled only
-class InterpolationSampling(Sampling):
-    def __init__(self, video, clip_length):
-        super().__init__(video, clip_length)
+class FixedStepSampler(Sampler):
+    def __init__(self, step=8):
+        self.step = step
+        
+    def sample(self, frame_dir):
+        """
+        Load every [step]-th frame from a directory.
+        """
+        frame_files = self.list_frames(frame_dir)
+        return frame_files[::self.step]
 
-    def sample(self):
-        # implement interpolation on short videos 
-        pass
 
-class SamplingWithAug(Sampling):
-    def __init__(self, video, clip_length=8, sample_rate=32, augmentation_type="random_horizontal_flip"):
-        super().__init__(video, clip_length)
-        self.sample_rate = sample_rate
-        self.augmentation_type = augmentation_type
+class EquidistantSampler(Sampler):
+    def __init__(self, initial_offset=5, min_frames=8):
+        self.initial_offset = initial_offset
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
+        frame_files = self.list_frames(frame_dir)
+        total_frames = len(frame_files)
+        
+        if total_frames <= self.initial_offset:
+            return frame_files  # Not enough frames, return all
 
-    def sample(self):
-        # implement augmented sampling here
-        pass
+        step = max(1, int((total_frames - self.initial_offset) / self.min_frames))
+        
+        return frame_files[self.initial_offset::step]
 
-class Others(Sampling):
-    def __init__(self, video, clip_length):
-        super().__init__(video, clip_length)
-
-    def sample(self):
-        # placeholder for other sampling methods
-        pass
-
+class InterpolationSampler(Sampler):
+    """
+    Sample frames from a video by interpolating between key frames.
+    """
+    def __init__(self, min_frames=8):
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
+        # TODO
+        frame_files = self.list_frames(frame_dir)
+        return frame_files  # Placeholder implementation
+        
+class AugmentationSampler(Sampler):
+    """
+    Sample frames from a video by adding new augmented frames.
+    """
+    def __init__(self, min_frames=8):
+        self.min_frames = min_frames
+        
+    def sample(self, frame_dir):
+        # TODO: Elisa-tea
+        frame_files = self.list_frames(frame_dir)
+        return frame_files  # Placeholder implementation
