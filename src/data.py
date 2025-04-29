@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import torch
 from tqdm import tqdm
 import random
-from .sampling import Sampler, FixedStepSampler
+from .sampling import Sampler, FrameSampler, ClipSampler, FixedStepSampler
 from .augmentations import default_transforms, train_augmentations
 
 CATEGORY_INDEX = {
@@ -78,19 +78,23 @@ def split_sources(dataset_path, train_ratio=0.8):
     return train_sources, val_sources
 
 
-def create_clips(frames, clip_size=8):
+def create_clips(frames, clip_size=8, frame_paths=None):
     """
     Given a list of sampled frames, create multiple [clip_size]-frame clips.
     Each clip is returned as a tensor.
     """
     clips = []
+    path_clips = []
     
     for i in range(0, len(frames) - clip_size + 1, clip_size):
         clip = frames[i : i + clip_size]
         if len(clip) == clip_size:
             clips.append(torch.stack(clip))  # Convert the clip to a tensor
-    return clips
+            if frame_paths is not None:
+                path_clips.append(frame_paths[i : i + clip_size])
 
+    return clips, path_clips
+            
 
 def process_dataset(
     dataset_path,
@@ -105,6 +109,7 @@ def process_dataset(
         augmentation_transform = lambda image: {"image": image}
 
     dataset = []
+    dataset_w_paths = []
 
     for category, instances in tqdm(sources_dict.items()):
         category_path = os.path.join(dataset_path, category)
@@ -114,33 +119,52 @@ def process_dataset(
             if not os.path.isdir(instance_path):
                 # print(f"Skipping non-directory file: {instance_path}")
                 continue
-
-            # Load sampled frames
-            frame_paths = sampler.sample(instance_path)
-
-            frames = []
-
-            for path in frame_paths:
-                try:
-                    frames.append(
-                        default_transforms(
-                            image=augmentation_transform(
-                                image=cv2.cvtColor(
-                                    cv2.imread(path), cv2.COLOR_BGR2RGB
-                                )
+            
+            if isinstance(sampler, FrameSampler): 
+                # Load sampled frames
+                frame_paths = sampler.sample(instance_path)
+                frames = []
+                for path in frame_paths:
+                    try:
+                        frames.append(
+                            default_transforms(
+                                image=augmentation_transform(
+                                    image=cv2.cvtColor(
+                                        cv2.imread(path), cv2.COLOR_BGR2RGB
+                                    )
+                                )["image"]
                             )["image"]
-                        )["image"]
-                    )
-                except Exception as e:
-                    print(f"Error processing frame {path}: {e}")
-                    frames.append(None)
+                        )
+                    except Exception as e:
+                        print(f"Error processing frame {path}: {e}")
+                        frames.append(None)
 
+            if isinstance(sampler, ClipSampler):
+                frames_created, frame_paths = sampler.sample(instance_path)
+                frame_paths = [f"{category}_{instance}_{round(pos, 3)}" for pos in frame_paths]
+                frames = []
+                for frame in frames_created:
+                    try:
+                        frames.append(
+                            default_transforms(
+                                image=augmentation_transform(
+                                    image=frame
+                                )["image"]
+                            )["image"]
+                        )
+                    except Exception as e:
+                        print(f"Error processing frame {path}: {e}")
+                        frames.append(None) 
+                
             # Create 8-frame clips
-            clips = create_clips(frames, 8)
-            for clip in clips:
-                dataset.append((clip, CATEGORY_INDEX[category]))
+            clips, clips_path = create_clips(frames, 8,frame_paths)
 
-    return dataset  # List of (clip, label)
+            for idx, clip in enumerate(clips):
+                dataset.append((clip, CATEGORY_INDEX[category]))
+                if clips_path is not None:
+                    dataset_w_paths.append((clip, clips_path[idx], CATEGORY_INDEX[category]))
+
+    return dataset, dataset_w_paths  # List of (clip, label)
 
 
 if __name__ == "__main__":
@@ -148,8 +172,8 @@ if __name__ == "__main__":
     # print(len(FixedStepSampler.sample(frame_dir="../HMDB_simp/")))
     train_sources, val_sources = split_sources(DATASET_PATH)
 
-    # Pr`ocess train and val sets separately
-    train_dataset = process_dataset(
+    # Process train and val sets separately
+    train_dataset, train_dataset_paths = process_dataset(
         DATASET_PATH, train_sources, augmentation_transform=train_augmentations
     )
     a = train_dataset[0]
