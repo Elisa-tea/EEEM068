@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 import torch
 from tqdm import tqdm
 import random
-from .sampling import Sampler, FixedStepSampler, AugmentationSampler
+from .sampling import Sampler, FixedStepSampler
 from .augmentations import default_transforms, train_augmentations
 
 CATEGORY_INDEX = {
@@ -96,7 +96,7 @@ def process_dataset(
     dataset_path,
     sources_dict,
     augmentation_transform=None,
-    sampler: Sampler = AugmentationSampler(),
+    sampler: Sampler = FixedStepSampler(),
 ):
     """
     Processes dataset based on a predefined list of sources.
