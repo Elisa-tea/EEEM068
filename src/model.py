@@ -34,7 +34,7 @@ def load_model(model_type, num_classes=len(CATEGORY_INDEX)):
         model = AutoModelForVideoClassification.from_pretrained(
             "facebook/timesformer-base-finetuned-k400"
         )
-        model.classifier = torch.nn.Linear(model.classifier.in_features, num_classes)
+        
         return extractor, model.to(device), device, Trainer
 
     elif model_type == "r3d":
