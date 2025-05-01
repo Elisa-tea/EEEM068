@@ -1,155 +1,144 @@
 from abc import ABC, abstractmethod
 import os
-import torch
-import random
 import torch.nn.functional as F
+import cv2
+import numpy as np
+from .augmentations import sampling_augmentations
+import random
 
 
 class Sampler(ABC):
     @abstractmethod
-    def sample(self, frame_dir=None, *args, **kwargs):
+    def sample(self, frame_dir=None, *args, **kwargs) -> list[np.ndarray]:
         pass
 
     @staticmethod
-    def list_frames(frame_dir):
+    def list_frames(frame_dir) -> list[str]:
         return [
             os.path.join(frame_dir, file)
             for file in sorted(os.listdir(frame_dir))
             if file.endswith((".jpg", ".png", ".jpeg"))
         ]
 
+    @staticmethod
+    def read_frames(frame_files) -> list[np.ndarray]:
+        return [
+            cv2.cvtColor(cv2.imread(frame_file), cv2.COLOR_BGR2RGB)
+            for frame_file in frame_files
+        ]
+
 
 class FixedStepSampler(Sampler):
     def __init__(self, step=8):
         self.step = step
-        
+
     def sample(self, frame_dir):
         """
         Load every [step]-th frame from a directory.
         """
         frame_files = self.list_frames(frame_dir)
-        return frame_files[::self.step]
+        return self.read_frames(frame_files[:: self.step])
 
 
 class EquidistantSampler(Sampler):
-    def __init__(self, initial_offset=5, min_frames=8):
+    def __init__(self, initial_offset=0, min_frames=8):
         self.initial_offset = initial_offset
         self.min_frames = min_frames
-        
+
     def sample(self, frame_dir):
         frame_files = self.list_frames(frame_dir)
         total_frames = len(frame_files)
-        
+
         if total_frames <= self.initial_offset:
             return frame_files  # Not enough frames, return all
 
         step = max(1, int((total_frames - self.initial_offset) / self.min_frames))
-        
-        return frame_files[self.initial_offset::step]
+
+        return self.read_frames(frame_files[self.initial_offset :: step])
+
 
 class InterpolationSampler(Sampler):
     """
     Sample frames from a video by interpolating between key frames.
+    Outputs interpolated frames as a numpy array (and frame positions for checking purposes).
     """
+
     def __init__(self, min_frames=8):
         self.min_frames = min_frames
-        
+
     def sample(self, frame_dir):
-        # TODO
-        frame_files = self.list_frames(frame_dir)
-        return frame_files  # Placeholder implementation
-        
+        input_frames = self.read_frames(self.list_frames(frame_dir))
+        total_frames = len(input_frames)
+
+        if total_frames <= 1 or total_frames >= self.min_frames:
+            return input_frames
+
+        frames_to_fill = self.min_frames - total_frames
+        positions = np.linspace(0, total_frames - 1, frames_to_fill)
+
+        output_frames = [(i, frame) for i, frame in enumerate(input_frames)]
+        for pos in positions:
+            low_idx = int(np.floor(pos))
+            high_idx = min(low_idx + 1, total_frames - 1)
+            alpha = pos - low_idx
+
+            frame_low = input_frames[low_idx]
+            frame_high = input_frames[high_idx]
+
+            interp_frame = cv2.addWeighted(frame_low, 1 - alpha, frame_high, alpha, 0)
+            output_frames.append((pos, interp_frame))
+
+        output_frames = [
+            frame for _, frame in sorted(output_frames, key=lambda x: x[0])
+        ]
+        return output_frames
+
+
 class AugmentationSampler(Sampler):
     """
     Sample frames from a video by adding new augmented frames.
     """
-    def __init__(self, min_frames=8):
+
+    def __init__(self, min_frames=8, augmentations=sampling_augmentations):
         self.min_frames = min_frames
-    
-    def random_horizontal_flip(frame, p=0.8):
+        self.augmentations = augmentations
+
+    def sample(self, frame_dir) -> list[np.ndarray]:
         """
-        #this highly preserve the content of the image#
-        Apply random horizontal flip to an image frame.
+        Creates augmented frames from existing frames if needed to reach min_frames.
+        Preserves frame order by tracking positions.
 
         Args:
-            frame (Tensor): Image tensor of shape (C, H, W).
-            p (float): Probability of applying the flip.
+            frame_dir: Directory containing frame images
 
         Returns:
-            Tensor: Horizontally flipped image tensor of shape (C, H, W) if flipped, else the original.
-        """
-        if random.random() < p:  # Flip with probability p
-            return F.hflip(frame)
-        return frame
-    
-
-    def vertical_down_translation(frame, shift=20):
-        """
-        Apply vertical down translation to an image frame.
-
-        Args:
-            frame (Tensor): Image tensor of shape (C, H, W).
-            shift (int): Number of pixels to shift the image downward.
-
-        Returns:
-            Tensor: Translated image tensor of shape (C, H, W).
-        """
-        C, H, W = frame.shape  # Get channel, height, width
-
-        # Create a black canvas (zero tensor)
-        translated_frame = torch.zeros_like(frame)
-
-        # Shift the original image down, filling the top with black pixels
-        if shift < H:  # Ensure shift is within bounds
-            translated_frame[:, shift:, :] = frame[:, :-shift, :]
-
-        return translated_frame
-
-    def sample(self, frame_dir, augmentation_type=random_horizontal_flip, min_frames=8, sample_rate=32):
-        """
-        Creates a frames_files from a video tensor based on the length conditions.
-
-        Args:
-            video (Tensor): Video tensor of shape (num_frames, C, H, W).
-            min_frames (int): Number of frames in the final frames_files.
-            sample_rate (int): Interval between sampled frames.
-
-        Returns:
-            Tensor: A single frames_files tensor of shape (min_frames, C, H, W).
+            list: Frames including original and augmented frames in proper temporal order
         """
 
-        video = torch.load(frame_dir)  # Load the video tensor
-        
-        num_frames = video.shape[0]
-        print(f"Total frames in video: {num_frames}")
+        input_frames = self.read_frames(self.list_frames(frame_dir))
+        total_frames = len(input_frames)
 
-        if num_frames >= min_frames * sample_rate:
-            # Sample every 32 frames to create an 8-frame frames_files
-            frames_files = video[::sample_rate][:min_frames]
+        if total_frames == 0 or total_frames >= self.min_frames:
+            return input_frames
 
-        else:
-            # Sample available frames at the given sample_rate
-            n = num_frames // sample_rate  # Compute how many frames we can sample
-            n_frames_files = video[::sample_rate][:n]
-            remaining_frames_needed = min_frames - n
+        frames_to_add = self.min_frames - total_frames
 
-            # Initialize additional_frames_files with an empty list to store frames
-            additional_frames = []
+        output_frames = [(i, frame) for i, frame in enumerate(input_frames)]
 
-            # Start sampling additional frames
-            start_idx = 0
-            while len(additional_frames) < remaining_frames_needed:
-                idx = (start_idx + sample_rate) % num_frames  # circular
-                t = video[idx:idx + 1]
-                additional_frames.append(t)
-                start_idx += sample_rate
+        positions = np.linspace(0, total_frames - 1, frames_to_add)
 
-            # Convert list to tensor and apply augmentation
-            additional_frames_files = torch.cat(additional_frames, dim=0)
-            additional_frames_files = torch.stack([augmentation_type(f) for f in additional_frames_files])
+        for pos in positions:
 
-            # Concatenate the sampled frames_files with the additional frames
-            frames_files = torch.cat([n_frames_files, additional_frames_files], dim=0)
+            source_idx = int(np.floor(pos))
 
-        return frames_files
-       
+            source_frame = input_frames[source_idx]
+
+            augmented = self.augmentations(image=source_frame)["image"]
+
+            output_frames.append((source_idx + random.uniform(0.0, 0.1), augmented))
+
+        output_frames = [
+            frame for _, frame in sorted(output_frames, key=lambda x: x[0])
+        ]
+
+        return output_frames
