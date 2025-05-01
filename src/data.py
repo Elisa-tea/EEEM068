@@ -99,6 +99,7 @@ def process_dataset(
     sources_dict,
     augmentation_transform=None,
     sampler: Sampler = FixedStepSampler(),
+    clip_length: int = 8,
 ):
     """
     Processes dataset based on a predefined list of sources.
@@ -130,7 +131,7 @@ def process_dataset(
                     continue
 
             # Create 8-frame clips
-            clips = create_clips(frames, 8)
+            clips = create_clips(frames, clip_length)
             for clip in clips:
                 dataset.append((clip, CATEGORY_INDEX[category]))
 

@@ -126,10 +126,12 @@ if __name__ == "__main__":
         train_sources,
         augmentation_transform=augmentation_transform,
         sampler=sampler,
+        clip_length=args.clip_length,
     )
 
     val_dataset = process_dataset(
-        VAL_DATASET_PATH, val_sources, augmentation_transform=None, sampler=sampler
+        VAL_DATASET_PATH, val_sources, augmentation_transform=None, sampler=sampler,
+        clip_length=args.clip_length,
     )
 
     dataset_size = len(train_dataset) + len(val_dataset)
