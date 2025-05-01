@@ -25,7 +25,16 @@ def parse_args():
         "--frame_step", type=int, default=8, help="Step size for fixed step sampler"
     )
     parser.add_argument(
-        "--min_frames", type=int, default=8, help="Minimum number of frames to use"
+        "--min_frames",
+        type=int,
+        default=8,
+        help="Minimum number of frames expected from sampler",
+    )
+    parser.add_argument(
+        "--clip_length",
+        type=int,
+        default=8,
+        help="How many frames are used for each clip",
     )
     parser.add_argument(
         "--initial_offset",
@@ -77,14 +86,18 @@ def parse_args():
 
 
 def get_sampler(sampler_type, **kwargs):
+    clip_length = kwargs.get("clip_length", 8)
     if sampler_type == "fixed_step":
-        return FixedStepSampler(step=kwargs.get("frame_step", 8))
+        return FixedStepSampler(step=kwargs.get("frame_step", clip_length))
     elif sampler_type == "equidistant":
-        return EquidistantSampler()
+        return EquidistantSampler(
+            initial_offset=kwargs.get("initial_offset", 0),
+            min_frames=kwargs.get("min_frames", clip_length),
+        )
     elif sampler_type == "interpolation":
-        return InterpolationSampler()
+        return InterpolationSampler(min_frames=kwargs.get("min_frames", clip_length))
     elif sampler_type == "augmentation":
-        return AugmentationSampler()
+        return AugmentationSampler(min_frames=kwargs.get("min_frames", clip_length))
     else:
         raise ValueError(f"Unknown sampler type: {sampler_type}")
 
@@ -98,7 +111,13 @@ if __name__ == "__main__":
 
     train_sources, val_sources = split_sources(TRAIN_DATASET_PATH)
 
-    sampler = get_sampler(args.sampler, frame_step=args.frame_step)
+    sampler = get_sampler(
+        args.sampler,
+        clip_length=args.clip_length,
+        frame_step=args.frame_step,
+        initial_offset=args.initial_offset,
+        min_frames=args.min_frames
+    )
 
     augmentation_transform = train_augmentations if args.use_augmentations else None
 
