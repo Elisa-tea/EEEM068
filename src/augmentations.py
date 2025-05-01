@@ -1,4 +1,5 @@
 import albumentations as A
+import albumentations.pytorch
 
 train_augmentations = A.Compose(
     [

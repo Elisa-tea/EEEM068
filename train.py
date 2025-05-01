@@ -5,7 +5,10 @@ from src.data import VideoDataCollator
 from src.model import Metrics
 from src.sampling import *
 import argparse
+import wandb
 
+
+wandb.init(project="ViT_project")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Video classification training script")
@@ -162,7 +165,7 @@ if __name__ == "__main__":
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
         push_to_hub=False,
-        report_to=None,
+        report_to="wandb"
     )
 
     trainer_kwargs = dict(
