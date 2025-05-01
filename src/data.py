@@ -1,8 +1,4 @@
-from abc import ABC, abstractmethod
 import os
-import cv2
-import torchvision.transforms as transforms
-from torch.utils.data import Dataset
 import torch
 from tqdm import tqdm
 import random
@@ -39,20 +35,26 @@ CATEGORY_INDEX = {
 
 
 class VideoDataCollator:
-    """
-    Custom data collator for TimeSFormer.
-    Converts (clip, label) tuples into a dictionary format.
-    """
+    def __init__(self, model_type="timesformer"):
+        self.model_type = model_type
 
     def __call__(self, features):
-        clips, labels = zip(*features)  # Unpack (clip, label)
-        batch = {
-            "pixel_values": torch.stack(clips),  # Stack clips into batch
-            "labels": torch.tensor(
-                labels, dtype=torch.long
-            ),  # Convert labels to tensor
-        }
-        return batch
+        clips, labels = zip(*features)  # Each clip: [T, 3, H, W]
+        label_tensor = torch.tensor(labels, dtype=torch.long)
+
+        if self.model_type == "r3d":
+            # Convert each clip to [3, T, H, W]
+            clips = [clip.permute(1, 0, 2, 3) for clip in clips]
+
+        video_tensor = torch.stack(clips)
+
+        if self.model_type == "timesformer":
+            return {"pixel_values": video_tensor, "labels": label_tensor}
+        elif self.model_type == "r3d":
+            return {"input": video_tensor, "labels": label_tensor}
+        else:
+            raise ValueError(f"Unsupported model_type: {self.model_type}")
+
 
 
 def split_sources(dataset_path, train_ratio=0.8):
@@ -84,7 +86,7 @@ def create_clips(frames, clip_size=8):
     Each clip is returned as a tensor.
     """
     clips = []
-    
+
     for i in range(0, len(frames) - clip_size + 1, clip_size):
         clip = frames[i : i + clip_size]
         if len(clip) == clip_size:
@@ -97,6 +99,7 @@ def process_dataset(
     sources_dict,
     augmentation_transform=None,
     sampler: Sampler = FixedStepSampler(),
+    clip_length: int = 8,
 ):
     """
     Processes dataset based on a predefined list of sources.
@@ -115,28 +118,20 @@ def process_dataset(
                 # print(f"Skipping non-directory file: {instance_path}")
                 continue
 
-            # Load sampled frames
-            frame_paths = sampler.sample(instance_path)
+            frames = sampler.sample(instance_path)
 
-            frames = []
-
-            for path in frame_paths:
+            for i, frame in enumerate(frames):
                 try:
-                    frames.append(
-                        default_transforms(
-                            image=augmentation_transform(
-                                image=cv2.cvtColor(
-                                    cv2.imread(path), cv2.COLOR_BGR2RGB
-                                )
-                            )["image"]
-                        )["image"]
-                    )
+                    frames[i] = default_transforms(
+                        image=augmentation_transform(image=frame)["image"]
+                    )["image"]
+
                 except Exception as e:
-                    print(f"Error processing frame {path}: {e}")
-                    frames.append(None)
+                    print(f"Error processing frame {i}: {e}")
+                    continue
 
             # Create 8-frame clips
-            clips = create_clips(frames, 8)
+            clips = create_clips(frames, clip_length)
             for clip in clips:
                 dataset.append((clip, CATEGORY_INDEX[category]))
 

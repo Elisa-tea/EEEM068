@@ -35,3 +35,12 @@ default_transforms = A.Compose(
         A.ToTensorV2(),
     ]
 )
+
+sampling_augmentations = A.Compose(
+    [
+        A.ShiftScaleRotate(
+            shift_limit=0.1, scale_limit=0.1, rotate_limit=15, p=1
+        ),
+        A.CenterCrop(224, 224),
+    ]
+)
