@@ -41,20 +41,21 @@ class FixedStepSampler(Sampler):
 
 
 class EquidistantSampler(Sampler):
-    def __init__(self, initial_offset=0, min_frames=8):
-        self.initial_offset = initial_offset
+    def __init__(self, min_frames=8, sample_rate=1):
         self.min_frames = min_frames
+        self.sample_rate = sample_rate
 
     def sample(self, frame_dir):
         frame_files = self.list_frames(frame_dir)
         total_frames = len(frame_files)
+        frames_to_sample = max(self.min_frames, int(total_frames * self.sample_rate))
 
-        if total_frames <= self.initial_offset:
-            return frame_files  # Not enough frames, return all
+        if total_frames <= frames_to_sample:
+            return self.read_frames(frame_files)
 
-        step = max(1, int((total_frames - self.initial_offset) / self.min_frames))
+        step = max(1, int(total_frames / frames_to_sample))
 
-        return self.read_frames(frame_files[self.initial_offset :: step])
+        return self.read_frames(frame_files[::step])
 
 
 class InterpolationSampler(Sampler):

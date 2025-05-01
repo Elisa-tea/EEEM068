@@ -25,6 +25,9 @@ def parse_args():
         "--frame_step", type=int, default=8, help="Step size for fixed step sampler"
     )
     parser.add_argument(
+        "--sample_rate", type=float, default=1, help="Sample rate for equidistant sampler"
+    )
+    parser.add_argument(
         "--min_frames",
         type=int,
         default=8,
@@ -91,7 +94,7 @@ def get_sampler(sampler_type, **kwargs):
         return FixedStepSampler(step=kwargs.get("frame_step", clip_length))
     elif sampler_type == "equidistant":
         return EquidistantSampler(
-            initial_offset=kwargs.get("initial_offset", 0),
+            sample_rate=kwargs.get("sample_rate", 1),
             min_frames=kwargs.get("min_frames", clip_length),
         )
     elif sampler_type == "interpolation":
@@ -115,7 +118,7 @@ if __name__ == "__main__":
         args.sampler,
         clip_length=args.clip_length,
         frame_step=args.frame_step,
-        initial_offset=args.initial_offset,
+        sample_rate=args.sample_rate,
         min_frames=args.min_frames
     )
 
