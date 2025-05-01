@@ -40,15 +40,24 @@ class Metrics:
 
     def compute_metrics(self, eval_pred):
         logits, labels = eval_pred
-
-        logits, labels = eval_pred
         predictions = torch.tensor(logits).argmax(dim=1)
 
         # Compute Accuracy
         top1_acc = self.accuracy_metric.compute(predictions=predictions.numpy(), references=labels)["accuracy"]
 
         # Compute Top-5 Accuracy
-        top5_acc = self.top5_metric(torch.tensor(logits).to(self.device), torch.tensor(labels).to(self.device)).item()
+        # Ensure logits have the right shape for top-5 calculation
+        logits_tensor = torch.tensor(logits).to(self.device)
+        labels_tensor = torch.tensor(labels).to(self.device)
+        
+        # Check if the shape is correct
+        if logits_tensor.shape[1] != len(CATEGORY_INDEX):
+            # Reshape if needed (in case the model outputs a different shape)
+            num_classes = len(CATEGORY_INDEX)
+            if logits_tensor.ndim > 1 and logits_tensor.shape[1] > num_classes:
+                logits_tensor = logits_tensor[:, :num_classes]
+        
+        top5_acc = self.top5_metric(logits_tensor, labels_tensor).item()
 
         # Compute F1-score (macro)
         f1 = self.f1_metric.compute(predictions=predictions.numpy(), references=labels, average="macro")["f1"]
