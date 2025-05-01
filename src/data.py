@@ -84,7 +84,7 @@ def create_clips(frames, clip_size=8):
     Each clip is returned as a tensor.
     """
     clips = []
-    
+
     for i in range(0, len(frames) - clip_size + 1, clip_size):
         clip = frames[i : i + clip_size]
         if len(clip) == clip_size:
@@ -115,25 +115,17 @@ def process_dataset(
                 # print(f"Skipping non-directory file: {instance_path}")
                 continue
 
-            # Load sampled frames
-            frame_paths = sampler.sample(instance_path)
+            frames = sampler.sample(instance_path)
 
-            frames = []
-
-            for path in frame_paths:
+            for i, frame in enumerate(frames):
                 try:
-                    frames.append(
-                        default_transforms(
-                            image=augmentation_transform(
-                                image=cv2.cvtColor(
-                                    cv2.imread(path), cv2.COLOR_BGR2RGB
-                                )
-                            )["image"]
-                        )["image"]
-                    )
+                    frames[i] = default_transforms(
+                        image=augmentation_transform(image=frame)["image"]
+                    )["image"]
+
                 except Exception as e:
-                    print(f"Error processing frame {path}: {e}")
-                    frames.append(None)
+                    print(f"Error processing frame {i}: {e}")
+                    continue
 
             # Create 8-frame clips
             clips = create_clips(frames, 8)
