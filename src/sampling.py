@@ -2,35 +2,25 @@ from abc import ABC, abstractmethod
 import os
 import cv2
 import numpy as np
-
-
 class Sampler(ABC):
     @abstractmethod
-    def sample(self, frame_dir=None, *args, **kwargs):
+    def sample(self, frame_dir=None, *args, **kwargs) -> list[np.ndarray]:
         pass
 
     @staticmethod
-    def list_frames(frame_dir):
+    def list_frames(frame_dir) -> list[str]:
         return [
             os.path.join(frame_dir, file)
             for file in sorted(os.listdir(frame_dir))
             if file.endswith((".jpg", ".png", ".jpeg"))
         ]
-
-class FrameSampler(Sampler):
-    #sub-parent class for selecting frame locations
-    @abstractmethod
-    def sample(self, frame_dir):
-        pass
-
-class ClipSampler(Sampler):
-    #sub-parent class for creating frames
-    @abstractmethod
-    def sample(self, frame_dir):
-        pass
+        
+    @staticmethod
+    def read_frames(frame_files) -> list[np.ndarray]:
+        return [cv2.cvtColor(cv2.imread(frame_file), cv2.COLOR_BGR2RGB) for frame_file in frame_files]
 
 
-class FixedStepSampler(FrameSampler):
+class FixedStepSampler(Sampler):
     def __init__(self, step=8):
         self.step = step
         
@@ -39,10 +29,10 @@ class FixedStepSampler(FrameSampler):
         Load every [step]-th frame from a directory.
         """
         frame_files = self.list_frames(frame_dir)
-        return frame_files[::self.step]
+        return self.read_frames(frame_files[::self.step])
 
 
-class EquidistantSampler(FrameSampler):
+class EquidistantSampler(Sampler):
     def __init__(self, initial_offset=5, min_frames=8):
         self.initial_offset = initial_offset
         self.min_frames = min_frames
@@ -56,51 +46,42 @@ class EquidistantSampler(FrameSampler):
 
         step = max(1, int((total_frames - self.initial_offset) / self.min_frames))
         
-        return frame_files[self.initial_offset::step]
+        return self.read_frames(frame_files[self.initial_offset::step])
 
-
-class InterpolationSampler(ClipSampler):
+class InterpolationSampler(Sampler):
     """
     Sample frames from a video by interpolating between key frames.
     Outputs interpolated frames as a numpy array (and frame positions for checking purposes).
     """
     def __init__(self, min_frames=8):
         self.min_frames = min_frames
-        self.transform = transforms.ToTensor()
         
     def sample(self, frame_dir):
-        frame_files = self.list_frames(frame_dir)
-        total_frames = len(frame_files)
+        input_frames = self.read_frames(self.list_frames(frame_dir))
+        total_frames = len(input_frames)
 
-        if total_frames == 0:
-            raise ValueError("Video is empty")
+        if total_frames <= 1 or total_frames >= self.min_frames:
+            return input_frames
+            
+        frames_to_fill = self.min_frames - total_frames
+        positions = np.linspace(0, total_frames - 1, frames_to_fill)
         
-        else:
-            video = []
-            for f in frame_files:
-                frame = cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB)
-                video.append(frame)
-                
-            positions = np.linspace(0, total_frames - 1, self.min_frames)
-            clip = []
-            for pos in positions:
-                low_idx = int(np.floor(pos))
-                high_idx = min(low_idx + 1, total_frames - 1)
-                alpha = pos - low_idx
+        output_frames = [(i, frame) for i, frame in enumerate(input_frames)]
+        for pos in positions:
+            low_idx = int(np.floor(pos))
+            high_idx = min(low_idx + 1, total_frames - 1)
+            alpha = pos - low_idx
 
-                frame_low = video[low_idx]
-                frame_high = video[high_idx]
-                
-                interp_frame = (1 - alpha) * frame_low + alpha * frame_high
-                interp_frame = np.clip(interp_frame, 0, 255).astype(np.uint8)       
-                clip.append(interp_frame)
-                
-        clip_frames = np.stack(clip, axis=0)
-        positions_frames = list(positions)
+            frame_low = input_frames[low_idx]
+            frame_high = input_frames[high_idx]
+            
+            interp_frame = cv2.addWeighted(frame_low, 1 - alpha, frame_high, alpha, 0)
+            output_frames.append((pos, interp_frame))
         
-        return clip_frames, positions_frames 
+        output_frames = [frame for _, frame in sorted(output_frames, key=lambda x: x[0])]
+        return output_frames
         
-class AugmentationSampler(ClipSampler):
+class AugmentationSampler(Sampler):
     """
     Sample frames from a video by adding new augmented frames.
     """
