@@ -326,4 +326,4 @@ dependencies:
       - stringzilla==3.12.5
       - sympy==1.13.1
       - threadpoolctl==3.6.0
-prefix: /Users/yiwenchan/miniconda3/envs/ViT_local
+
