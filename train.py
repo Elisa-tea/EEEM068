@@ -8,8 +8,6 @@ import argparse
 import wandb
 
 
-wandb.init(project="ViT_project")
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Video classification training script")
     parser.add_argument(
@@ -110,6 +108,11 @@ def get_sampler(sampler_type, **kwargs):
 
 if __name__ == "__main__":
     args = parse_args()
+    
+    # Initialize wandb with config from arguments
+    config = vars(args)
+    wandb.init(project="Timesformer_tests", config=config)
+    
     extractor, model, device, TrainerClass = load_model(args.model_type)
 
     TRAIN_DATASET_PATH = args.train_dataset_path
