@@ -16,15 +16,15 @@ train_augmentations = A.Compose(
                 A.RGBShift(r_shift_limit=15, g_shift_limit=15, b_shift_limit=15, p=0.5),
             ],
             p=0.4,
-        ),
+        )
         # Noise/Quality
-        A.OneOf(
-            [
-                A.GaussNoise(p=0.5),
-                A.ImageCompression(quality_range=(65, 95), p=0.5),
-            ],
-            p=0.4,
-        ),
+        # A.OneOf(
+        #     [
+        #         A.GaussNoise(p=0.5),
+        #         A.ImageCompression(quality_range=(65, 95), p=0.5),
+        #     ],
+        #     p=0.4,
+        # ),
     ]
 )
 
