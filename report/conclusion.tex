@@ -1,0 +1,14 @@
+We have successfully addressed the video action recognition task using the TimeSformer architecture, achieving strong performance on the HMDB dataset. 
+Our best model achieves 90.3\% accuracy, 98.4\% top-5 accuracy and 81.6\% F1-score, significantly outperforming the R3D baseline (69.7\% accuracy) and the simple tuning of the TimeSformer model. 
+Through systematic experimentation, we have demonstrated how TimeSformer model can be effectively adapted to the HMDB dataset.
+
+Our experiments reveal several key insights.
+The TimeSformer architecture proves particularly effective for this task due to its ability to capture both spatial and temporal relationships through self-attention.
+The choice of sampling strategy significantly impacts model performance, with fixed sampling providing better accuracy while equidistant sampling offering more balanced performance across classes.
+Data augmentation techniques help improve model robustness, though their effectiveness varies depending on the transformation type.
+
+Future work could explore several promising directions. 
+First, more thorough data exploration and preprocessing could be beneficial, particularly in terms of frame filtering and class balancing. 
+The promising results from our initial frame filtering experiment suggest that a more comprehensive analysis of temporal redundancy could lead to further improvements. 
+Second, the varying complexity of different action classes suggests that adaptive methods, which can adjust their processing based on action characteristics, might be more effective than uniform approaches. 
+Finally, exploring architectures that can better handle the temporal dynamics of different action types could lead to more robust performance across all classes.
