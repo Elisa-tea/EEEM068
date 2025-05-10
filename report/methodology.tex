@@ -1,0 +1,54 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+
+\begin{document}
+
+\section{Methodology}
+
+\subsection{Dataset}
+The HMDB-simp dataset is a simplified subset of the HMDB51 human action recognition benchmark, consisting of 25 action categories with 50 videos per category. The dataset provides a balanced yet diverse collection of real-world video samples, making it well-suited for evaluating action recognition models. In this project, it is used to assess the performance of the Vision Transformer (ViT), which classifies actions by modelling temporal patterns from visual features extracted across individual video frames. 
+
+During the exploratory data analysis, several videos with duplicate frames were identified, particularly in classes such as “brush hair”, “pour”, “kiss” and “climb”. These duplicates, which mostly occurred at the end of the videos due to freeze frames, could bias model training by causing the model to focus on static frame repetitions instead of discriminative temporal changes, which are crucial for accurate action recognition. Removing these duplicates was essential for the investigation, as it ensured the model learnt realistic motion patterns and not redundant information. After cleaning, the dataset had a more even distribution of frames across classes, reducing bias and ensuring better suitability for model training. 
+
+\subsection{Sampling Strategies}
+Sampling is commonly applied in video classification tasks to balance capturing temporal information and computation cost [9]. 
+
+Two sampling strategies are implemented:  
+
+• Fixed sampling: With step k, every k-th frame from the video is sampled.  
+
+• Equidistant sampling: Distributes frames evenly across the video sequence, providing uniform temporal coverage. 
+
+Additionally, the sampling strategies are combined with various clip lengths. Compared to the paper “Is Space-Time Attention All You Need for Video Understanding?” [1], where the authors sampled the frames at the rate of 1/32, the HMDB-simp dataset has relatively short videos clips, and lengths of the videos vary noticeably. As a result, for the experiments with fixed-step sampling, our group used a sample rate of 1/8 for 8-frame clips and a sample rate of 1/4 for 16-frame clips. 
+
+\subsection{Augmentation}
+To improve generalisation in action recognition, we incorporated data augmentation techniques during training. These were chosen to simulate real-world variations and encourage the model to focus on time-dependent features rather than stationary visual features. The pipeline consisted of two components: 
+
+* Brightness and Contrast Augmentations: Random adjustments to brightness, contrast, hue, saturation, and RGB channel shifts, promoting invariance to lighting and colour variation. 
+
+* Noise and Quality Augmentations: adding Gaussian noise and image compression artefacts, improving robustness to real-world video quality variations and compression. 
+
+Each transformation was applied with a fixed probability and ordered to maintain temporal coherence. For instance, the colour augmentations were applied before noise-based ones, ensuring structural integrity of the frames was retained while introducing meaningful variability. 
+
+\subsection{Models}
+We implement TimeSFormer as our primary model for action classification, leveraging its divided space–time attention mechanism to model fine-grained temporal dependencies across frames. To explore how architectural choices affect performance, we also evaluate R3D-18, a widely used 3D convolution network for video tasks. Unlike TimeSFormer, R3D-18 relies on local spatiotemporal convolutions, which may be less effective at capturing longer-range motion cues. Comparing these two models allows us to investigate how well transformer-based methods perform relative to convolutional approaches – especially under the limited-data conditions of the HMDB-simp dataset, where actions can involve subtle or gradual changes. 
+
+\subsection{Frame Filtering}
+We applied a frame filtering technique to eliminate redundant or highly similar frames from each video. The objective was to retain only the most informative frames, reducing dataset size and encouraging the model to focus on significant temporal transitions rather than visual redundancy. 
+
+We used three similarity measures to identify and remove frames that were too similar to their predecessors:  
+
+Cross-Correlation: Measures the similarity between two frames by calculating the correlation of their pixel values, with lower values indicating greater differences between frames 
+
+Structural Similarity (SSIM): Assesses the perceptual similarity between two frames by comparing their luminance, contrast, and structure, with lower values indicating more significant differences. 
+
+Optical Flow: Calculates the motion of pixels between frames by estimating the displacement of pixel intensities, with higher values indicating greater motion and changes in the scene. 
+
+Specific thresholds were set for each metric to filter out frames with minimal changes, ensuring that the remaining frames captured meaningful motion or scene variation. 
+
+This filtering process reduced the total number of frames in the dataset, while preserving key temporal dynamics. This not only enhanced training efficiency but also helped the model concentrate on relevant action transitions, rather than being distracted by redundant visual information. 
+
+\end{document}
