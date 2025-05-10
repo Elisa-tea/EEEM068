@@ -1,0 +1,90 @@
+\begin{table}[h]
+    \centering
+    \begin{tabular}{llllll}
+    \hline
+    \textbf{Exp.} & \textbf{Length} & \textbf{Sampling} & \textbf{Acc.} & \textbf{Top-5} & \textbf{F1} \\
+    \hline
+    1.a-fixed & 8 & Fixed (8) & 0.852 & 0.968 & 0.719 \\
+    1.a-eq & 8 & Equidistant & 0.820 & 0.949 & \textbf{0.818} \\
+    1.b-fixed & 16 & Fixed (8) & 0.840 & 0.955 & 0.730 \\
+    1.b-eq & 16 & Equidistant & 0.820 & 0.964 & \textbf{0.818} \\
+    1.c-eq & 32 & Equidistant & 0.835 & 0.976 & 0.803 \\
+    \hline
+    full-aug & 8 & Fixed (8) & 0.846 & 0.946 & 0.736 \\
+    b/c-aug & 8 & Fixed (8) & 0.840 & 0.974 & 0.725 \\
+    n/q-aug & 8 & Fixed (8) & 0.821 & 0.966 & 0.709 \\
+    \hline
+    filtered & 8 & Fixed (8) & 0.852 & 0.979 & 0.770 \\
+    r3d & 10 & Fixed (8) & 0.697 & 0.921 & 0.574 \\
+    \hline
+    hpo\_best & 8 & Fixed (8) & \textbf{0.903} & \textbf{0.984} & \textbf{0.816} \\
+    \hline
+    \end{tabular}
+    \caption{Performance metrics for different experimental configurations.}\label{tab:experiments}
+\end{table}
+
+\subsection{Experimental Setup}
+
+We evaluate different approaches to the given problem through three key aspects: clip sampling strategies, data augmentation techniques, and hyperparameter optimisation.
+All experiments are based on the TimeSformer~\cite{TODO} architecture.
+
+\subsection{Clip Sampling Strategies}
+
+We implement two sampling strategies:
+\begin{itemize}
+    \item \textbf{Fixed sampling}: With step $k$, we sample every $k$-th frame from the video.
+    
+    \item \textbf{Equidistant sampling}: Distributes frames evenly across the video sequence, providing uniform temporal coverage.
+\end{itemize}
+
+We experiment with different combinations of clip length, sampling strategy, and corresponding parameters.
+We can observe that the fixed sampling strategy is more effective for the given problem, with the best accuracy achieved when the clip length is $8$.
+This can be explained by the model's architecture, which employs cross-frame attention and is sensitive to the temporal resolution of the input video.
+At the same time, the equidistant sampling tends to result in better F1-score, indicating more balanced performance across different action classes, that can vary significantly in duration and complexity.
+
+\subsection{Data Augmentation Techniques}
+
+We investigate the impact of different augmentation strategies on model performance, building upon the best-performing clip sampling configuration (8 frames with fixed sampling).
+Our augmentation pipeline consists of two main components:
+
+\begin{itemize}
+    \item \textbf{Brightness and Contrast}: Random adjustments to brightness, contrast, hue, saturation, and RGB channel shifts. 
+    These transformations help the model become invariant to lighting conditions and colour variations.
+    
+    \item \textbf{Noise and Quality}: Gaussian noise and image compression artefacts. These augmentations improve robustness to real-world video quality variations and compression.
+\end{itemize}
+
+As shown in~\autoref{tab:experiments}, the full augmentation pipeline (full-aug) achieves comparable accuracy to the baseline while slightly improving the F1-score.
+This suggests that augmentations could help maintain performance on common cases while improving recognition of more challenging actions. 
+The brightness/contrast augmentations alone show similar performance, indicating that color-space transformations can be effective for this task.
+The noise/quality augmentations result in slightly lower metrics, suggesting that these transformations might be too aggressive for the current dataset and model architecture. 
+This could be due to the HMDB dataset already containing videos with varying quality levels.
+
+\subsection{Hyperparameter Optimisation}
+
+We conduct hyperparameter optimisation to fine-tune the model's performance. The optimisation focuses on three key parameters:
+
+\begin{itemize}
+    \item \textbf{Learning Rate}
+    \item \textbf{Weight Decay}
+    \item \textbf{Batch Size}
+\end{itemize}
+
+The optimisation process is performed on the best-performing configuration from previous experiments.
+As shown in~\autoref{tab:experiments}, the hyperparameter tuning results in improved model performance, with the best configuration achieving higher accuracy and F1-score compared to the baseline.
+
+The optimisation process reveals that the model is particularly sensitive to learning rate variations, with smaller learning rates generally leading to more stable training.
+The best performing configuration uses a smaller batch size, suggesting that more frequent parameter updates might be beneficial for this task.
+
+\subsection{Additional Experiments}
+
+We conduct two additional experiments to further understand the model's behaviour:
+
+\begin{itemize}
+    \item \textbf{R3D~\cite{TODO} Model}: We evaluate the performance of a 3D ResNet architecture (R3D) on the same task.
+     As shown in~\autoref{tab:experiments}, the R3D model achieves significantly lower performance compared to TimeSformer.
+     This demonstrates the need for a more complex architecture for video action recognition.
+    
+    \item \textbf{Filtered Dataset}: We investigate the impact of removing similar consecutive frames using optical flow and SSIM-based filtering.
+    While the filtered dataset shows promising results with improved F1-score, proper analysis and balancing of such filtering techniques would require more extensive investigation and is better suited for a separate future work.
+\end{itemize}
