@@ -10,6 +10,8 @@ This repository contains the project for the EEEM068 module
 - [Results](#results)
 - [Contributing](#contributing)
 - [License](#license)
+## Introduction
+
 ## Features
 - Implementation of various machine learning models
 - Analysis of datasets
@@ -24,6 +26,8 @@ This repository contains the project for the EEEM068 module
 1. Clone this repository:
 2. Install dependencies:
 ## Dataset
+The HMDB_simp dataset includes 1,250 videos, with 50 videos per category. Each subfolder of the dataset corresponds
+to a different action category. The dataset includes 1,250 videos, with 50 videos per category.
 The dataset used in this project is HMDB_simp_cleaned, a cleaned version of HMDB_simp (without duplicated frames)
 
 ## License
