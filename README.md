@@ -17,6 +17,7 @@ This project explores **action recognition in videos** using Vision Transformers
 - Jupyter Notebook
   
 ### Project Structure
+The `data_exploration` folder contains some data analysis notebooks and visualisation tools, and the `src` folder has detailed information of the models
 ```
 ├── data_exploration
 │   ├── clean_data.ipynb
