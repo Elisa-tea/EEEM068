@@ -5,6 +5,7 @@ This project explores **action recognition in videos** using Vision Transformers
 ## Table of Contents
 - [Getting Started](#gettingstarted)
 - [Installation](#installation)
+- [Project Structure](#projectstructure)
 - [Dataset](#dataset)
 - [License](#license)
 
@@ -14,7 +15,22 @@ This project explores **action recognition in videos** using Vision Transformers
 ### Prerequisites
 - Python 3.10
 - Jupyter Notebook
-
+  
+### Project Structure
+```
+├── data_exploration
+│   ├── clean_data.ipynb
+│   ├── frame-filtering.ipynb
+│   └── GradCAM2.ipynb
+├── environment.yml
+├── README.md
+├── src
+│   ├── augmentations.py
+│   ├── data.py
+│   ├── model.py
+│   └── sampling.py
+└── train.py
+```
 ### Installation
 1. Clone this repository: git clone https://github.com/Elisa-tea/EEEM068.git
 2. Install dependencies:
