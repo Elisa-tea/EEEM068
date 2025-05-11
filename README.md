@@ -7,6 +7,7 @@ This repository contains the project for the EEEM068 module
 - [Dataset](#dataset)
 - [License](#license)
 ## Introduction
+This project explores action recognition in videos using Vision Transformers, with a focus on the TimeSformer architecture. By evaluating various frame sampling strategies, augmentation techniques, and model configurations on the HMDB_simp dataset, the study achieves a top accuracy of 90.3% and demonstrates the effectiveness of transformer-based approaches for capturing spatiotemporal patterns in video data.
 
 
 ## Getting Started
