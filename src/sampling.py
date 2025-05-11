@@ -8,12 +8,22 @@ import random
 
 
 class Sampler(ABC):
+    """
+    Abstract base class for all samplers.
+    """
+
     @abstractmethod
     def sample(self, frame_dir=None, *args, **kwargs) -> list[np.ndarray]:
+        """
+        Abstract method to sample frames from a video.
+        """
         pass
 
     @staticmethod
     def list_frames(frame_dir) -> list[str]:
+        """
+        List all frames in a directory.
+        """
         return [
             os.path.join(frame_dir, file)
             for file in sorted(os.listdir(frame_dir))
@@ -22,6 +32,9 @@ class Sampler(ABC):
 
     @staticmethod
     def read_frames(frame_files) -> list[np.ndarray]:
+        """
+        Read all frames from a list of file paths.
+        """
         return [
             cv2.cvtColor(cv2.imread(frame_file), cv2.COLOR_BGR2RGB)
             for frame_file in frame_files
@@ -46,6 +59,9 @@ class EquidistantSampler(Sampler):
         self.sample_rate = sample_rate
 
     def sample(self, frame_dir):
+        """
+        Sample frames from a video by selecting equidistant frames.
+        """
         frame_files = self.list_frames(frame_dir)
         total_frames = len(frame_files)
         frames_to_sample = max(self.min_frames, int(total_frames * self.sample_rate))
@@ -68,6 +84,9 @@ class InterpolationSampler(Sampler):
         self.min_frames = min_frames
 
     def sample(self, frame_dir):
+        """
+        Sample frames from a video by interpolating between key frames.
+        """
         input_frames = self.read_frames(self.list_frames(frame_dir))
         total_frames = len(input_frames)
 
@@ -108,12 +127,6 @@ class AugmentationSampler(Sampler):
         """
         Creates augmented frames from existing frames if needed to reach min_frames.
         Preserves frame order by tracking positions.
-
-        Args:
-            frame_dir: Directory containing frame images
-
-        Returns:
-            list: Frames including original and augmented frames in proper temporal order
         """
 
         input_frames = self.read_frames(self.list_frames(frame_dir))

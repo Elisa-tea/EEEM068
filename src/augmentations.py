@@ -1,5 +1,4 @@
 import albumentations as A
-import albumentations.pytorch
 
 train_augmentations = A.Compose(
     [
@@ -28,6 +27,7 @@ train_augmentations = A.Compose(
     ]
 )
 
+# Preprocessing transforms
 default_transforms = A.Compose(
     [
         A.Resize(224, 224),
@@ -36,6 +36,7 @@ default_transforms = A.Compose(
     ]
 )
 
+# Augmentations used for AugmentationSampler
 sampling_augmentations = A.Compose(
     [
         A.ShiftScaleRotate(

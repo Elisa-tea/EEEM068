@@ -7,9 +7,14 @@ from transformers import AutoFeatureExtractor, AutoModelForVideoClassification
 from transformers import Trainer
 from torchvision.models.video import r3d_18
 from .data import CATEGORY_INDEX
+from typing import Optional, Union
+from torchvision.models.video import VideoResNet
 
 
-def get_device():
+def get_device() -> torch.device:
+    """
+    Get the appropriate device for running the model.
+    """
     if torch.cuda.is_available():
         device = torch.device("cuda")
         x = torch.ones(1, device=device)
@@ -24,7 +29,12 @@ def get_device():
     return device
 
 
-def load_model(model_type, num_classes=len(CATEGORY_INDEX)):
+def load_model(model_type, num_classes=len(CATEGORY_INDEX)) -> tuple[
+    Optional[AutoFeatureExtractor],
+    Union[AutoModelForVideoClassification, VideoResNet],
+    torch.device,
+    Trainer,
+]:
     device = get_device()
 
     if model_type == "timesformer":
@@ -34,7 +44,7 @@ def load_model(model_type, num_classes=len(CATEGORY_INDEX)):
         model = AutoModelForVideoClassification.from_pretrained(
             "facebook/timesformer-base-finetuned-k400"
         )
-        
+
         return extractor, model.to(device), device, Trainer
 
     elif model_type == "r3d":
@@ -45,7 +55,7 @@ def load_model(model_type, num_classes=len(CATEGORY_INDEX)):
             def compute_loss(
                 self, model, inputs, return_outputs=False, num_items_in_batch=None
             ):
-                videos = inputs["input"]  # [B, 3, T, H, W]
+                videos = inputs["input"]
                 labels = inputs["labels"]
                 outputs = model(videos)
                 loss_fn = torch.nn.CrossEntropyLoss()
@@ -84,17 +94,14 @@ class Metrics:
         ).to(device)
         self.device = device
 
-    def compute_metrics(self, eval_pred):
+    def compute_metrics(self, eval_pred) -> dict[str, float]:
         logits, labels = eval_pred
         predictions = torch.tensor(logits).argmax(dim=1)
 
-        # Compute Accuracy
         top1_acc = self.accuracy_metric.compute(
             predictions=predictions.numpy(), references=labels
         )["accuracy"]
 
-        # Compute Top-5 Accuracy
-        # Ensure logits have the right shape for top-5 calculation
         logits_tensor = torch.tensor(logits).to(self.device)
         labels_tensor = torch.tensor(labels).to(self.device)
 
@@ -107,7 +114,6 @@ class Metrics:
 
         top5_acc = self.top5_metric(logits_tensor, labels_tensor).item()
 
-        # Compute F1-score (macro)
         f1 = self.f1_metric.compute(
             predictions=predictions.numpy(), references=labels, average="macro"
         )["f1"]

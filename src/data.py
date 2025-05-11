@@ -38,12 +38,13 @@ class VideoDataCollator:
     def __init__(self, model_type="timesformer"):
         self.model_type = model_type
 
-    def __call__(self, features):
-        clips, labels = zip(*features)  # Each clip: [T, 3, H, W]
+    def __call__(
+        self, features: list[tuple[torch.Tensor, int]]
+    ) -> dict[str, torch.Tensor]:
+        clips, labels = zip(*features)
         label_tensor = torch.tensor(labels, dtype=torch.long)
 
         if self.model_type == "r3d":
-            # Convert each clip to [3, T, H, W]
             clips = [clip.permute(1, 0, 2, 3) for clip in clips]
 
         video_tensor = torch.stack(clips)
@@ -56,8 +57,9 @@ class VideoDataCollator:
             raise ValueError(f"Unsupported model_type: {self.model_type}")
 
 
-
-def split_sources(dataset_path, train_ratio=0.8):
+def split_sources(
+    dataset_path, train_ratio=0.8
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """
     Splits source folders into train and val sets before processing clips.
     Ensures that all clips from a source video stay in the same set.
@@ -74,13 +76,17 @@ def split_sources(dataset_path, train_ratio=0.8):
         random.shuffle(instances)  # Shuffle instances before splitting
 
         split_idx = int(len(instances) * train_ratio)
-        train_sources[category] = instances[:split_idx]  # First 80% for training
-        val_sources[category] = instances[split_idx:]  # Last 20% for validation
+        train_sources[category] = instances[
+            :split_idx
+        ]  # First [train_ratio] for training
+        val_sources[category] = instances[
+            split_idx:
+        ]  # Last [1-train_ratio] for validation
 
     return train_sources, val_sources
 
 
-def create_clips(frames, clip_size=8):
+def create_clips(frames, clip_size=8) -> list[torch.Tensor]:
     """
     Given a list of sampled frames, create multiple [clip_size]-frame clips.
     Each clip is returned as a tensor.
@@ -100,7 +106,7 @@ def process_dataset(
     augmentation_transform=None,
     sampler: Sampler = FixedStepSampler(),
     clip_length: int = 8,
-):
+) -> list[tuple[torch.Tensor, int]]:
     """
     Processes dataset based on a predefined list of sources.
     """
@@ -115,7 +121,6 @@ def process_dataset(
         for instance in instances:
             instance_path = os.path.join(category_path, instance)
             if not os.path.isdir(instance_path):
-                # print(f"Skipping non-directory file: {instance_path}")
                 continue
 
             frames = sampler.sample(instance_path)
@@ -130,21 +135,17 @@ def process_dataset(
                     print(f"Error processing frame {i}: {e}")
                     continue
 
-            # Create 8-frame clips
             clips = create_clips(frames, clip_length)
             for clip in clips:
                 dataset.append((clip, CATEGORY_INDEX[category]))
 
-    return dataset  # List of (clip, label)
+    return dataset
 
 
 if __name__ == "__main__":
     DATASET_PATH = "HMDB_simp/"
-    # print(len(FixedStepSampler.sample(frame_dir="../HMDB_simp/")))
     train_sources, val_sources = split_sources(DATASET_PATH)
 
-    # Pr`ocess train and val sets separately
     train_dataset = process_dataset(
         DATASET_PATH, train_sources, augmentation_transform=train_augmentations
     )
-    a = train_dataset[0]
