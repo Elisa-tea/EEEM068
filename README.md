@@ -55,7 +55,7 @@ python train.py --sampler fixed_step --frame_step 8 --clip_length 8 --train_batc
 ## Dataset
 The HMDB_simp dataset includes 1,250 videos - 50 videos in each of the 25 categories. Each subfolder of the dataset corresponds
 to a different action category. The dataset used in this project is HMDB_simp_clean, which is a cleaned version of HMDB_simp with the duplicated frames removed. To get this dataset: 
-- Open the "data_exploration/clean_data.ipynb" file. 
+- Open the `data_exploration/clean_data.ipynb` file. 
 - Run the first "Clean Data" section in the file. This creates a cleaned dataset called "HMDB_simp_clean" with the duplicate frames removed.
 - The rest of the notebook contains checks and visuals comparing the raw and cleaned dataset. 
 
