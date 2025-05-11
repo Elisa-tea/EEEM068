@@ -13,7 +13,6 @@ This repository contains the project for the EEEM068 module
 ### Prerequisites
 - Python 3.10
 - Jupyter Notebook
-- Required libraries: numpy, pandas, scikit-learn, matplotlib, seaborn, pytorch, torchvision
 
 ### Installation
 1. Clone this repository: git clone https://github.com/Elisa-tea/EEEM068.git
@@ -29,8 +28,12 @@ pip install \
   simsimd stringzilla tf-keras
 ```
 ### Run the program
-1. train.py
-2. GradCAM2.ipynb
+#### 1. train.py
+for example, for fixed-step sampling and a clip length of 8, run the following command in the terminal:
+```
+python train.py --sampler fixed_step --frame_step 8 --clip_length 8 --train_batch_size 4 --lr 0.00001 --weight_decay 0.095 --use_augmentations(optional)
+```
+#### 2. GradCAM2.ipynb
 ## Dataset
 The HMDB_simp dataset includes 1,250 videos, with 50 videos per category. Each subfolder of the dataset corresponds
 to a different action category. The dataset includes 1,250 videos, with 50 videos per category.
