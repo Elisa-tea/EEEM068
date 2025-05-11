@@ -47,6 +47,7 @@ pip install \
 ```
 ### Run the program
 #### 1. train.py
+run `train.py` to train the model.
 for example, for fixed-step sampling and a clip length of 8, run the following command in the terminal:
 ```
 python train.py --sampler fixed_step --frame_step 8 --clip_length 8 --train_batch_size 4 --lr 0.00001 --weight_decay 0.095 --use_augmentations(optional)
