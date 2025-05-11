@@ -3,6 +3,7 @@ This repository contains the project for the EEEM068 module
 
 ## Table of Contents
 - [Introduction](#introduction)
+- [Getting Started](#gettingstarted)
 - [Installation](#installation)
 - [Dataset](#dataset)
 - [License](#license)
