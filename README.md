@@ -24,7 +24,7 @@ This repository contains the project for the EEEM068 module
 1. Clone this repository:
 2. Install dependencies:
 ## Dataset
-The dataset used in this project is HMDB_simp_cleaned, a cleaned version of HMDB_simp (withtout duplicated frames)
+The dataset used in this project is HMDB_simp_cleaned, a cleaned version of HMDB_simp (without duplicated frames)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
