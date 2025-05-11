@@ -3,28 +3,34 @@ This repository contains the project for the EEEM068 module
 
 ## Table of Contents
 - [Introduction](#introduction)
-- [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
 - [Dataset](#dataset)
-- [Results](#results)
-- [Contributing](#contributing)
 - [License](#license)
 ## Introduction
 
-## Features
-- Implementation of various machine learning models
-- Analysis of datasets
-- Visualization of results
+
 ## Getting Started
 ### Prerequisites
-- Python 3.x
+- Python 3.10
 - Jupyter Notebook
-- Required libraries: numpy, pandas, scikit-learn, matplotlib, seaborn
+- Required libraries: numpy, pandas, scikit-learn, matplotlib, seaborn, pytorch, torchvision
 
 ### Installation
-1. Clone this repository:
+1. Clone this repository: git clone https://github.com/Elisa-tea/EEEM068.git
 2. Install dependencies:
+```
+pip install \
+  torch torchvision \
+  albumentations albucore \
+  scikit-learn matplotlib pandas tqdm ipykernel \
+  fastapi uvicorn \
+  transformers datasets evaluate \
+  gradio wandb accelerate torchmetrics \
+  simsimd stringzilla tf-keras
+```
+### Run the program
+1. train.py
+2. GradCAM2.ipynb
 ## Dataset
 The HMDB_simp dataset includes 1,250 videos, with 50 videos per category. Each subfolder of the dataset corresponds
 to a different action category. The dataset includes 1,250 videos, with 50 videos per category.
