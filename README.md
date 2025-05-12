@@ -52,7 +52,7 @@ for example, for fixed-step sampling and a clip length of 8, run the following c
 ```
 python train.py --sampler fixed_step --frame_step 8 --clip_length 8 --train_batch_size 4 --lr 0.00001 --weight_decay 0.095 --use_augmentations(optional) --train_dataset_path /path_to/HMDB_simp_clean --val_dataset_path /path_to/HMDB_simp_clean
 ```
-The results and logs will show on `wandb`
+The results and logs will show on `wandb`.
 #### 2. GradCAM2.ipynb
 ## Dataset
 The HMDB_simp dataset includes 1,250 videos - 50 videos in each of the 25 categories. Each subfolder of the dataset corresponds
