@@ -22,7 +22,9 @@ The `data_exploration` folder contains some data analysis notebooks and visualis
 ├── data_exploration
 │   ├── clean_data.ipynb
 │   ├── frame-filtering.ipynb
-│   └── GradCAM2.ipynb
+│   ├── GradCAM2.ipynb
+│   ├── Statistics.ipynb
+│   └── ConfusionMatr.ipynb
 ├── environment.yml
 ├── README.md
 ├── src
@@ -45,6 +47,7 @@ pip install \
   gradio wandb accelerate torchmetrics \
   simsimd stringzilla tf-keras
 ```
+3. For the GradCAM2.ipynb (optionally for ConfusionMatr.ipynb) download the trained model https://drive.google.com/file/d/1fIcNd6_-NC39UQeRq2SRSY-Iqh-B_Fp2/view?usp=sharing and extract these files on the left bar of the notebook.
 ### Run the program
 #### 1. train.py
 Run `train.py` to train the model.\
@@ -53,7 +56,6 @@ for example, for fixed-step sampling and a clip length of 8, run the following c
 python train.py --sampler fixed_step --frame_step 8 --clip_length 8 --train_batch_size 4 --lr 0.00001 --weight_decay 0.095 --use_augmentations(optional) --train_dataset_path /path_to/HMDB_simp_clean --val_dataset_path /path_to/HMDB_simp_clean
 ```
 The results and logs will show on `wandb`.
-#### 2. GradCAM2.ipynb
 ## Dataset
 The HMDB_simp dataset includes 1,250 videos - 50 videos in each of the 25 categories. Each subfolder of the dataset corresponds
 to a different action category. The dataset used in this project is HMDB_simp_clean, which is a cleaned version of HMDB_simp with the duplicated frames removed. To get this dataset: 
